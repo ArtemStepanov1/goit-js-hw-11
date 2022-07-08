@@ -20,11 +20,11 @@ refs.searchForm.addEventListener("submit", onFormSubmit);
 
 async function onFormSubmit(evt) {
     evt.preventDefault();
-    inputValue = refs.inputEl.value;   
+    inputValue = refs.inputEl.value.trim();
     refs.gallery.innerHTML = "";
     refs.btnEl.classList.add("is-hiden");
     page = 1;
-    if(refs.inputEl.value === "" || refs.inputEl.value === ` `) {
+    if(inputValue === "") {
         Notiflix.Notify.warning("Please, enter something");
         return;
         }
