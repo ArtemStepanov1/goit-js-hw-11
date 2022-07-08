@@ -14,33 +14,37 @@ const refs = {
 let page = 1;
 const perPage = 40;
 let inputValue = "";
+let picturesToshow = 0;
 
 refs.searchForm.addEventListener("submit", onFormSubmit);
 
 async function onFormSubmit(evt) {
     evt.preventDefault();
-    refs.btnSubmit.disabled = true;
     inputValue = refs.inputEl.value;   
     refs.gallery.innerHTML = "";
     refs.btnEl.classList.add("is-hiden");
     page = 1;
-
-    try {        
-        const pictures = await fetchPictures(inputValue, page, perPage)
-         if (pictures.hits.length === 0) {
-            Notiflix.Notify.info("Sorry, there are no images matching your search query. Please try again.");
+    if(refs.inputEl.value === "" || refs.inputEl.value === ` `) {
+        Notiflix.Notify.warning("Please, enter something");
+        return;
         }
+        try {
+            const pictures = await fetchPictures(inputValue, page, perPage)
+            if (pictures.hits.length === 0) {
+                Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.");
+            }
+            picturesToshow = pictures.total - pictures.hits.length;
+            renderDate(pictures);
+
+            if (pictures.hits.length >= 40) {
+            loadMore()
+            }
+            Notiflix.Notify.success(`Hooray! We found ${pictures.total} images.`);
         
-        renderDate(pictures);
-        loadMore();
-        Notiflix.Notify.info(`Hooray! We found ${pictures.total} images.`);
-       
-    } catch(error) {
-        console.log(error);
-        
-    }
-    refs.btnSubmit.disabled = false;
-    return inputValue;
+        } catch(error) {
+            console.log(error);
+        }
+        return inputValue;
 }
 
 function renderDate(pictures) {
@@ -72,9 +76,14 @@ function renderDate(pictures) {
 }
 
 function loadMore() {
-    refs.btnEl.classList.remove("is-hiden");
-    page += 1;
-    refs.btnEl.addEventListener("click", onLoadMoreBtnSubmit)
+    if (picturesToshow > 0) {
+        refs.btnEl.classList.remove("is-hiden");
+        page += 1;
+        refs.btnEl.addEventListener("click", onLoadMoreBtnSubmit);
+    } else { 
+        refs.btnEl.classList.add("is-hiden");  
+        setTimeout(Notiflix.Notify.info("We're sorry, but you've reached the end of search results."), 1000);
+    }
 }
 
 async function onLoadMoreBtnSubmit() {
@@ -82,13 +91,8 @@ async function onLoadMoreBtnSubmit() {
         const pictures = await fetchPictures(inputValue, page, perPage);
           
         renderDate(pictures);
+        picturesToshow -= pictures.hits.length;
         loadMore();
-
-         if (page >= pictures.total / perPage) {
-           refs.btnEl.classList.add("is-hiden");  
-            Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
-        }
-       
     } catch(error) {
         console.log(error);        
     }    
@@ -110,3 +114,4 @@ function slowLoad() {
         behavior: "smooth",
     });
 }
+
